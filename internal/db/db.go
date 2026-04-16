@@ -43,6 +43,38 @@ func Connect(dbPath string) (*sql.DB, error) {
 }
 
 func Init(dbPath string) error {
-	_, err := Connect(dbPath)
+	db, err := Connect(dbPath)
+	if err != nil {
+		return err
+	}
+	return CreateTables(db)
+}
+
+func CreateTables(db *sql.DB) error {
+	_, err := db.Exec(`
+	CREATE TABLE IF NOT EXISTS tracks (
+
+		path TEXT PRIMARY KEY,
+		type TEXT DEFAULT 'reading',
+		interval REAL DEFAULT 1.0,
+		afactor REAL DEFAULT 2.0,
+		due_date INTEGER DEFAULT (strftime('%s', 'now')),
+		is_finished INTEGER DEFAULT 0,
+		priority REAL DEFAULT (ABS(random() % 21) + 40)
+
+	)`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+	 CREATE TABLE IF NOT EXISTS sessions (
+
+		date TEXT DEFAULT (date('now', 'localtime')),
+		duration INTEGER,
+		reviewed INTEGER,
+		finished INTEGER
+
+	 )`)
 	return err
 }
