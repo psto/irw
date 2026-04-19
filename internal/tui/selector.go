@@ -20,6 +20,16 @@ func RunZk(args ...string) ([]byte, error) {
 	return cmd.Output()
 }
 
+type ZkRunner interface {
+	Run(args ...string) ([]byte, error)
+}
+
+type RealZkRunner struct{}
+
+func (r RealZkRunner) Run(args ...string) ([]byte, error) {
+	return RunZk(args...)
+}
+
 func ReadKey() (rune, error) {
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {

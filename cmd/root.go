@@ -140,10 +140,10 @@ var readCmd = &cobra.Command{
 }
 
 var importCmd = &cobra.Command{
-	Use:   "import",
+	Use: "import",
 	Short: "Sync files from zk and sioyek",
 	Run: func(cmd *cobra.Command, args []string) {
-		commands.Import(database)
+		commands.Import(database, cfg)
 	},
 }
 

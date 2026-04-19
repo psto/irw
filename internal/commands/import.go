@@ -7,38 +7,53 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/psto/irw/internal/config"
 	"github.com/psto/irw/internal/db"
 	"github.com/psto/irw/internal/models"
 	"github.com/psto/irw/internal/tui"
 )
 
-func Import(database *sql.DB) {
-	importFromZk(database)
+func Import(database *sql.DB, cfg config.ConfigProvider) {
+	importFromZk(database, cfg, tui.RealZkRunner{})
 	importFromSioyek(database)
 }
 
-func importFromZk(database *sql.DB) {
-	for _, tag := range []string{"reading", "writing"} {
-		fmt.Printf("Importing status/%s...\n", tag)
-		output, err := tui.RunZk("list", "--tag", "status/"+tag, "--format", "json")
-		if err != nil {
-			continue
-		}
+func importFromZk(database *sql.DB, cfg config.ConfigProvider, zkRunner tui.ZkRunner) {
+	zkTags := cfg.GetZkTags()
+	validPaths := make(map[string]bool)
 
-		var notes []models.ZkNote
-		if err := json.Unmarshal(output, &notes); err != nil {
-			continue
-		}
-
-		for _, note := range notes {
-			priority := note.Metadata.Priority
-			if err := db.InsertTrack(database, note.AbsPath, tag, priority); err != nil {
+	for trackType, tags := range zkTags {
+		for _, tag := range tags {
+			fmt.Printf("Importing %s...\n", tag)
+			output, err := zkRunner.Run("list", "--tag", tag, "--format", "json")
+			if err != nil {
 				continue
 			}
-			if priority != nil {
-				db.UpdatePriority(database, note.AbsPath, *priority)
+
+			var notes []models.ZkNote
+			if err := json.Unmarshal(output, &notes); err != nil {
+				continue
+			}
+
+			for _, note := range notes {
+				validPaths[note.AbsPath] = true
+				priority := note.Metadata.Priority
+				if err := db.InsertTrack(database, note.AbsPath, trackType, priority); err != nil {
+					continue
+				}
+				if priority != nil {
+					db.UpdatePriority(database, note.AbsPath, *priority)
+				}
 			}
 		}
+	}
+
+	configuredTypes := make([]string, 0, len(zkTags))
+	for t := range zkTags {
+		configuredTypes = append(configuredTypes, t)
+	}
+	if err := db.CleanupOrphanedTracks(database, configuredTypes, validPaths); err != nil {
+		fmt.Printf("Warning: failed to cleanup orphaned tracks: %v\n", err)
 	}
 
 	fmt.Println("Checking for dead links...")

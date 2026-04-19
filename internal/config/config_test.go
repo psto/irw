@@ -43,7 +43,7 @@ func TestLoadConfigCreatesDefault(t *testing.T) {
 		t.Fatalf("failed to read config: %v", err)
 	}
 
-	var parsed map[string]string
+	var parsed map[string]any
 	if err := json.Unmarshal(data, &parsed); err != nil {
 		t.Fatal("auto-created config is not valid JSON")
 	}

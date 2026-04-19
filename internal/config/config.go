@@ -9,18 +9,21 @@ import (
 type ConfigProvider interface {
 	GetDBPath() string
 	GetLauncher() string
+	GetZkTags() map[string][]string
 }
 
 type Config struct {
-	DBPath         string `json:"db_path"`
-	Launcher       string `json:"launcher"`
-	DBPathExplicit bool   `json:"-"`
+	DBPath string `json:"db_path"`
+	Launcher string `json:"launcher"`
+	ZkTags map[string][]string `json:"zk_tags"`
+	DBPathExplicit bool `json:"-"`
 }
 
 func (c *Config) UnmarshalJSON(data []byte) error {
 	type aliasStruct struct {
-		DBPath   string `json:"db_path"`
+		DBPath string `json:"db_path"`
 		Launcher string `json:"launcher"`
+		ZkTags map[string][]string `json:"zk_tags"`
 	}
 	var tmp aliasStruct
 	if err := json.Unmarshal(data, &tmp); err != nil {
@@ -28,8 +31,9 @@ func (c *Config) UnmarshalJSON(data []byte) error {
 	}
 	c.DBPath = tmp.DBPath
 	c.Launcher = tmp.Launcher
+	c.ZkTags = tmp.ZkTags
 	c.DBPathExplicit = tmp.DBPath != ""
-return nil
+	return nil
 }
 
 func (c *Config) GetDBPath() string {
@@ -44,6 +48,16 @@ func (c *Config) GetLauncher() string {
 		return c.Launcher
 	}
 	return DefaultLauncher()
+}
+
+func (c *Config) GetZkTags() map[string][]string {
+	if len(c.ZkTags) > 0 {
+		return c.ZkTags
+	}
+	return map[string][]string{
+		"reading": {"status/reading"},
+		"writing": {"status/writing"},
+	}
 }
 
 func Load() (*Config, error) {
@@ -79,14 +93,18 @@ func Load() (*Config, error) {
 
 func writeDefaultConfig(path string) error {
 	cfg := &Config{
-		DBPath:   DefaultDBPath(),
+		DBPath: DefaultDBPath(),
 		Launcher: "",
-	}
-	data, err := json.MarshalIndent(cfg, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(path, data, 0644)
+		ZkTags: map[string][]string{
+			"reading": {"status/reading"},
+"writing": {"status/writing"},
+	},
+}
+data, err := json.MarshalIndent(cfg, "", " ")
+if err != nil {
+	return err
+}
+return os.WriteFile(path, data, 0644)
 }
 
 type NullConfig struct{}
@@ -97,4 +115,11 @@ func (n NullConfig) GetDBPath() string {
 
 func (n NullConfig) GetLauncher() string {
 	return ""
+}
+
+func (n NullConfig) GetZkTags() map[string][]string {
+	return map[string][]string{
+		"reading": {"status/reading"},
+		"writing": {"status/writing"},
+	}
 }

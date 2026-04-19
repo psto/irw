@@ -2,6 +2,8 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
+	"strings"
 	"time"
 )
 
@@ -192,4 +194,58 @@ func SetDueIn(db *sql.DB, path string, seconds int64) error {
 	newDue := time.Now().Unix() + seconds
 	_, err := db.Exec("UPDATE tracks SET due_date=? WHERE path=?", newDue, path)
 	return err
+}
+
+func CleanupOrphanedTracks(db *sql.DB, configuredTypes []string, validPaths map[string]bool) error {
+	if len(configuredTypes) == 0 {
+		return nil
+	}
+
+	if len(validPaths) == 0 {
+		placeholders := strings.Repeat("?,", len(configuredTypes))
+		placeholders = placeholders[:len(placeholders)-1]
+		args := make([]any, len(configuredTypes))
+		for i, t := range configuredTypes {
+			args[i] = t
+		}
+		q := fmt.Sprintf("DELETE FROM tracks WHERE type IN (%s)", placeholders)
+		_, err := db.Exec(q, args...)
+		return err
+	}
+
+	placeholders := strings.Repeat("?,", len(configuredTypes))
+	placeholders = placeholders[:len(placeholders)-1]
+
+	args := make([]any, len(configuredTypes))
+	for i, t := range configuredTypes {
+		args[i] = t
+	}
+
+	q := fmt.Sprintf("SELECT path FROM tracks WHERE type IN (%s)", placeholders)
+	rows, err := db.Query(q, args...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var toDelete []string
+	for rows.Next() {
+		var path string
+		if err := rows.Scan(&path); err != nil {
+			continue
+		}
+		if !validPaths[path] {
+			toDelete = append(toDelete, path)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	for _, path := range toDelete {
+		if _, err := db.Exec("DELETE FROM tracks WHERE path = ?", path); err != nil {
+			return err
+		}
+	}
+	return nil
 }
