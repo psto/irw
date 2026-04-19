@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/psto/irw/internal/config"
 	"github.com/psto/irw/internal/db"
 	"github.com/psto/irw/internal/tui"
 )
@@ -56,7 +57,7 @@ func ShowSchedule(database *sql.DB, raw, null bool) {
 	fmt.Print(tui.RenderSchedule(items))
 }
 
-func ReadFile(database *sql.DB) error {
+func ReadFile(cfg config.ConfigProvider, database *sql.DB) error {
 	paths, err := db.GetActivePaths(database)
 	if err != nil {
 		return err
@@ -70,7 +71,7 @@ func ReadFile(database *sql.DB) error {
 
 	startTime := time.Now()
 
-	if err := tui.LaunchFile(selected); err != nil {
+	if err := tui.LaunchFile(cfg, selected); err != nil {
 		return err
 	}
 

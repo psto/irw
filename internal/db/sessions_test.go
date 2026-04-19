@@ -2,11 +2,13 @@ package db
 
 import (
 	"testing"
+
+	"github.com/psto/irw/internal/config"
 )
 
 func TestLogSession(t *testing.T) {
 	tmpDir := t.TempDir()
-	db, err := Connect(tmpDir + "/test.db")
+	db, err := Connect(config.NullConfig{}, tmpDir+"/test.db")
 	if err != nil {
 		t.Fatalf("Connect failed: %v", err)
 	}
@@ -21,7 +23,7 @@ func TestLogSession(t *testing.T) {
 
 func TestGetRecentSessions(t *testing.T) {
 	tmpDir := t.TempDir()
-	db, err := Connect(tmpDir + "/test.db")
+	db, err := Connect(config.NullConfig{}, tmpDir+"/test.db")
 	if err != nil {
 		t.Fatalf("Connect failed: %v", err)
 	}

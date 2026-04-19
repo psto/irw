@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/psto/irw/internal/commands"
+	"github.com/psto/irw/internal/config"
 	"github.com/psto/irw/internal/db"
 	"github.com/spf13/cobra"
 )
@@ -16,15 +17,23 @@ var (
 	compactMode bool
 	rawMode     bool
 	nullMode    bool
+	cfg         *config.Config
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "ir",
+	Use:   "irw",
 	Short: "Spaced repetition file tracker",
 	Long:  `A spaced repetition system for managing reading and writing queues.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		var err error
-		database, err = db.Connect(dbPath)
+		cfg, err = config.Load()
+		if err != nil {
+			return err
+		}
+		if dbPath == "" && !cfg.DBPathExplicit {
+			fmt.Fprintf(os.Stderr, "Warning: no db_path set. Set in ~/.config/irw/config.json or use --db flag. Default: %s\n", config.DefaultDBPath())
+		}
+		database, err = db.Connect(cfg, dbPath)
 		if err != nil {
 			return err
 		}
@@ -118,7 +127,7 @@ var reviewCmd = &cobra.Command{
 		if len(args) > 1 {
 			ext = args[1]
 		}
-		return commands.Review(database, trackType, ext, compactMode)
+		return commands.Review(cfg, database, trackType, ext, compactMode)
 	},
 }
 
@@ -126,7 +135,7 @@ var readCmd = &cobra.Command{
 	Use:   "read",
 	Short: "Pick a specific file to read",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return commands.ReadFile(database)
+		return commands.ReadFile(cfg, database)
 	},
 }
 
@@ -147,10 +156,7 @@ var purgeCmd = &cobra.Command{
 }
 
 func init() {
-	home, _ := os.UserHomeDir()
-	defaultPath := home + "/.local/share/ir-tool/ir.db"
-
-	rootCmd.PersistentFlags().StringVar(&dbPath, "db", defaultPath, "database path")
+	rootCmd.PersistentFlags().StringVar(&dbPath, "db", "", "database path (overrides config)")
 	reviewCmd.Flags().BoolVar(&compactMode, "compact", false, "use compact terminal output")
 	scheduleCmd.Flags().BoolVar(&rawMode, "raw", false, "output raw CSV format")
 	scheduleCmd.Flags().BoolVarP(&nullMode, "print0", "0", false, "output null-delimited paths (for xargs -0)")

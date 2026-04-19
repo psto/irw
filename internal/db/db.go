@@ -6,19 +6,14 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/psto/irw/internal/config"
+
 	_ "modernc.org/sqlite"
 )
 
-var defaultDBPath string
-
-func init() {
-	home, _ := os.UserHomeDir()
-	defaultDBPath = filepath.Join(home, ".local/share/ir-tool/ir.db")
-}
-
-func Connect(dbPath string) (*sql.DB, error) {
+func Connect(cfg config.ConfigProvider, dbPath string) (*sql.DB, error) {
 	if dbPath == "" {
-		dbPath = defaultDBPath
+		dbPath = cfg.GetDBPath()
 	}
 
 	dbDir := filepath.Dir(dbPath)
@@ -40,14 +35,6 @@ func Connect(dbPath string) (*sql.DB, error) {
 	}
 
 	return db, nil
-}
-
-func Init(dbPath string) error {
-	db, err := Connect(dbPath)
-	if err != nil {
-		return err
-	}
-	return CreateTables(db)
 }
 
 func CreateTables(db *sql.DB) error {

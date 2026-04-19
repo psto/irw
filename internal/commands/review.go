@@ -6,11 +6,12 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/psto/irw/internal/config"
 	"github.com/psto/irw/internal/db"
 	"github.com/psto/irw/internal/tui"
 )
 
-func Review(database *sql.DB, trackType string, ext string, compactMode bool) error {
+func Review(cfg config.ConfigProvider, database *sql.DB, trackType string, ext string, compactMode bool) error {
 	if trackType == "" {
 		trackType = "reading"
 	}
@@ -41,7 +42,7 @@ func Review(database *sql.DB, trackType string, ext string, compactMode bool) er
 			fmt.Print(tui.RenderReviewItem(filename, dueCount))
 		}
 
-		if err := tui.LaunchFile(path); err != nil {
+		if err := tui.LaunchFile(cfg, path); err != nil {
 			fmt.Printf("Failed to launch: %v\n", err)
 		}
 

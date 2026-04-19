@@ -2,11 +2,13 @@ package db
 
 import (
 	"testing"
+
+	"github.com/psto/irw/internal/config"
 )
 
 func TestInsertTrack(t *testing.T) {
 	tmpDir := t.TempDir()
-	db, err := Connect(tmpDir + "/test.db")
+	db, err := Connect(config.NullConfig{}, tmpDir+"/test.db")
 	if err != nil {
 		t.Fatalf("Connect failed: %v", err)
 	}
@@ -21,7 +23,7 @@ func TestInsertTrack(t *testing.T) {
 
 func TestDeleteTrack(t *testing.T) {
 	tmpDir := t.TempDir()
-	db, err := Connect(tmpDir + "/test.db")
+	db, err := Connect(config.NullConfig{}, tmpDir+"/test.db")
 	if err != nil {
 		t.Fatalf("Connect failed: %v", err)
 	}
@@ -37,7 +39,7 @@ func TestDeleteTrack(t *testing.T) {
 
 func TestMarkFinished(t *testing.T) {
 	tmpDir := t.TempDir()
-	db, err := Connect(tmpDir + "/test.db")
+	db, err := Connect(config.NullConfig{}, tmpDir+"/test.db")
 	if err != nil {
 		t.Fatalf("Connect failed: %v", err)
 	}
@@ -53,7 +55,7 @@ func TestMarkFinished(t *testing.T) {
 
 func TestUpdatePriority(t *testing.T) {
 	tmpDir := t.TempDir()
-	db, err := Connect(tmpDir + "/test.db")
+	db, err := Connect(config.NullConfig{}, tmpDir+"/test.db")
 	if err != nil {
 		t.Fatalf("Connect failed: %v", err)
 	}
@@ -69,7 +71,7 @@ func TestUpdatePriority(t *testing.T) {
 
 func TestUpdateInterval(t *testing.T) {
 	tmpDir := t.TempDir()
-	db, err := Connect(tmpDir + "/test.db")
+	db, err := Connect(config.NullConfig{}, tmpDir+"/test.db")
 	if err != nil {
 		t.Fatalf("Connect failed: %v", err)
 	}
@@ -85,7 +87,7 @@ func TestUpdateInterval(t *testing.T) {
 
 func TestGetNextDue(t *testing.T) {
 	tmpDir := t.TempDir()
-	db, err := Connect(tmpDir + "/test.db")
+	db, err := Connect(config.NullConfig{}, tmpDir+"/test.db")
 	if err != nil {
 		t.Fatalf("Connect failed: %v", err)
 	}
@@ -107,7 +109,7 @@ func TestGetNextDue(t *testing.T) {
 
 func TestGetAllPaths(t *testing.T) {
 	tmpDir := t.TempDir()
-	db, err := Connect(tmpDir + "/test.db")
+	db, err := Connect(config.NullConfig{}, tmpDir+"/test.db")
 	if err != nil {
 		t.Fatalf("Connect failed: %v", err)
 	}

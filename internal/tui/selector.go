@@ -5,13 +5,13 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/psto/irw/internal/config"
 	"golang.org/x/term"
 )
 
-func LaunchFile(path string) error {
-	home, _ := os.UserHomeDir()
-	launchPath := home + "/.local/bin/launch"
-	cmd := exec.Command(launchPath, path)
+func LaunchFile(cfg config.ConfigProvider, path string) error {
+	launcher := cfg.GetLauncher()
+	cmd := exec.Command(launcher, path)
 	return cmd.Run()
 }
 
