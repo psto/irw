@@ -11,9 +11,10 @@ go install github.com/psto/irw@latest
 ## Quick Start
 
 ```bash
-irw track ~/papers/attention.pdf    # Add a file
-irw review                          # Start reviewing due items
-irw schedule                        # See what's due
+irw track ~/papers/attention.pdf         # Add to reading queue
+irw track ~/drafts/chapter.md -q writing # Add to writing queue
+irw review                               # Start reviewing due items
+irw schedule                             # See what's due
 ```
 
 Press **Enter** after reviewing to schedule the next interval. Use **f** to finish an item forever, **s** to skip 1 hour, **z** to postpone 1 week.
@@ -33,7 +34,7 @@ Config file lives at `~/.config/irw/config.json` and is created automatically wi
 
 | Command | Description |
 |---------|-------------|
-| `irw track <file>` | Add file to queue |
+| `irw track <file>` | Add file to queue. Use `--queue` (`-q`) to specify reading (default) or writing |
 | `irw untrack <file>` | Remove from queue |
 | `irw complete [file]` | Mark as finished |
 | `irw priority [file] [p]` | Set priority 0–100 |

@@ -11,9 +11,16 @@ import (
 	"github.com/psto/irw/internal/tui"
 )
 
-func Track(database *sql.DB, input string) error {
+func Track(database *sql.DB, input string, queueType string) error {
+	if queueType == "" {
+		queueType = "reading"
+	}
+	if queueType != "reading" && queueType != "writing" {
+		return fmt.Errorf("invalid queue: %q (must be 'reading' or 'writing')", queueType)
+	}
+
 	if isURI(input) {
-		if err := db.InsertTrack(database, input, "reading", nil); err != nil {
+		if err := db.InsertTrack(database, input, queueType, nil); err != nil {
 			return err
 		}
 		fmt.Printf("Tracked URI: %s\n", input)
@@ -34,7 +41,7 @@ func Track(database *sql.DB, input string) error {
 		priority = extractZkPriority(absPath)
 	}
 
-	if err := db.InsertTrack(database, absPath, "reading", priority); err != nil {
+	if err := db.InsertTrack(database, absPath, queueType, priority); err != nil {
 		return err
 	}
 
