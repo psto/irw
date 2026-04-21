@@ -47,7 +47,7 @@ var trackCmd = &cobra.Command{
 	Short: "Add a new file to the tracker",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return commands.Track(database, args[0], trackQueue)
+		return commands.Track(cfg, database, args[0], trackQueue)
 	},
 }
 
@@ -103,7 +103,7 @@ var statsCmd = &cobra.Command{
 		if len(args) > 0 {
 			trackType = args[0]
 		}
-		commands.ShowStats(database, trackType)
+		commands.ShowStats(cfg, database, trackType)
 	},
 }
 
@@ -161,7 +161,7 @@ func init() {
 	reviewCmd.Flags().BoolVar(&compactMode, "compact", false, "use compact terminal output")
 	scheduleCmd.Flags().BoolVar(&rawMode, "raw", false, "output raw CSV format")
 	scheduleCmd.Flags().BoolVarP(&nullMode, "print0", "0", false, "output null-delimited paths (for xargs -0)")
-	trackCmd.Flags().StringVarP(&trackQueue, "queue", "q", "reading", "queue to add file to (reading/writing)")
+	trackCmd.Flags().StringVarP(&trackQueue, "queue", "q", "", "queue to add file to (configured in zk_tags)")
 
 	rootCmd.AddCommand(trackCmd)
 	rootCmd.AddCommand(untrackCmd)

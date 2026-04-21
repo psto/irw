@@ -1,10 +1,45 @@
 package commands
 
 import (
+	"sort"
+	"strings"
 	"testing"
+
+	"github.com/psto/irw/internal/config"
 )
 
+type trackMockConfig struct {
+	defaultQueue string
+	zkTags       map[string][]string
+}
+
+func (m trackMockConfig) GetDBPath() string {
+	return ""
+}
+
+func (m trackMockConfig) GetLauncher() string {
+	return ""
+}
+
+func (m trackMockConfig) GetDefaultQueue() string {
+	return m.defaultQueue
+}
+
+func (m trackMockConfig) GetZkTags() map[string][]string {
+	return m.zkTags
+}
+
+var _ config.ConfigProvider = trackMockConfig{}
+
 func TestTrackWithQueueFlag(t *testing.T) {
+	cfg := trackMockConfig{
+		defaultQueue: "reading",
+		zkTags: map[string][]string{
+			"reading": {"status/reading"},
+			"writing": {"status/writing"},
+		},
+	}
+
 	tests := []struct {
 		name      string
 		queueType string
@@ -63,7 +98,7 @@ func TestTrackWithQueueFlag(t *testing.T) {
 				input = createMockFile(t, tmpDir, "test.pdf")
 			}
 
-			err := Track(database, input, tt.queueType)
+			err := Track(cfg, database, input, tt.queueType)
 
 			if tt.wantErr {
 				if err == nil {
@@ -87,28 +122,126 @@ func TestTrackWithQueueFlag(t *testing.T) {
 	}
 }
 
-func TestTrackInvalidQueueReturnsHelpfulError(t *testing.T) {
+func TestTrackCustomQueue(t *testing.T) {
+	cfg := trackMockConfig{
+		defaultQueue: "reading",
+		zkTags: map[string][]string{
+			"reading":  {"status/reading"},
+			"writing":  {"status/writing"},
+			"research": {"status/research"},
+		},
+	}
+
+	database, tmpDir := setupTestDB(t)
+	defer database.Close()
+
+	testFile := createMockFile(t, tmpDir, "paper.pdf")
+
+	err := Track(cfg, database, testFile, "research")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var trackType string
+	err = database.QueryRow("SELECT type FROM tracks WHERE path = ?", testFile).Scan(&trackType)
+	if err != nil {
+		t.Fatalf("failed to query track type: %v", err)
+	}
+	if trackType != "research" {
+		t.Errorf("expected type %q, got %q", "research", trackType)
+	}
+}
+
+func TestTrackCustomDefaultQueue(t *testing.T) {
+	cfg := trackMockConfig{
+		defaultQueue: "writing",
+		zkTags: map[string][]string{
+			"reading": {"status/reading"},
+			"writing": {"status/writing"},
+		},
+	}
+
+	database, tmpDir := setupTestDB(t)
+	defer database.Close()
+
+	testFile := createMockFile(t, tmpDir, "draft.md")
+
+	err := Track(cfg, database, testFile, "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var trackType string
+	err = database.QueryRow("SELECT type FROM tracks WHERE path = ?", testFile).Scan(&trackType)
+	if err != nil {
+		t.Fatalf("failed to query track type: %v", err)
+	}
+	if trackType != "writing" {
+		t.Errorf("expected type %q (default), got %q", "writing", trackType)
+	}
+}
+
+func TestTrackInvalidQueueListsAllQueues(t *testing.T) {
+	cfg := trackMockConfig{
+		defaultQueue: "reading",
+		zkTags: map[string][]string{
+			"reading":  {"status/reading"},
+			"writing":  {"status/writing"},
+			"research": {"status/research"},
+		},
+	}
+
 	database, tmpDir := setupTestDB(t)
 	defer database.Close()
 
 	testFile := createMockFile(t, tmpDir, "test.pdf")
 
-	err := Track(database, testFile, "foobar")
+	err := Track(cfg, database, testFile, "foobar")
 	if err == nil {
 		t.Fatal("expected error for invalid queue type")
 	}
 
-	wantMsg := "must be 'reading' or 'writing'"
-	if !containsString(err.Error(), wantMsg) {
-		t.Errorf("error message should contain %q, got %q", wantMsg, err.Error())
+	errMsg := err.Error()
+	queues := []string{"reading", "research", "writing"}
+	sort.Strings(queues)
+	wantPart := "configured queues: " + strings.Join(queues, ", ")
+	if !containsString(errMsg, wantPart) {
+		t.Errorf("error message should contain %q, got %q", wantPart, errMsg)
+	}
+}
+
+func TestTrackInvalidQueueNotInConfig(t *testing.T) {
+	cfg := trackMockConfig{
+		defaultQueue: "reading",
+		zkTags: map[string][]string{
+			"reading": {"status/reading"},
+			"writing": {"status/writing"},
+		},
+	}
+
+	database, tmpDir := setupTestDB(t)
+	defer database.Close()
+
+	testFile := createMockFile(t, tmpDir, "test.pdf")
+
+	err := Track(cfg, database, testFile, "research")
+	if err == nil {
+		t.Fatal("expected error for queue not in config")
 	}
 }
 
 func TestTrackNonExistentFileReturnsError(t *testing.T) {
+	cfg := trackMockConfig{
+		defaultQueue: "reading",
+		zkTags: map[string][]string{
+			"reading": {"status/reading"},
+		},
+	}
+
 	database, _ := setupTestDB(t)
 	defer database.Close()
 
-	err := Track(database, "/nonexistent/path.pdf", "reading")
+	err := Track(cfg, database, "/nonexistent/path.pdf", "reading")
 	if err == nil {
 		t.Error("expected error for non-existent file")
 	}

@@ -135,6 +135,40 @@ func TestNullConfig(t *testing.T) {
 	if nc.GetLauncher() != "" {
 		t.Error("NullConfig GetLauncher should return empty string")
 	}
+	if nc.GetDefaultQueue() != "reading" {
+		t.Error("NullConfig GetDefaultQueue should return 'reading'")
+	}
+}
+
+func TestGetDefaultQueue(t *testing.T) {
+	tests := []struct {
+		name   string
+		config Config
+		want   string
+	}{
+		{
+			name:   "explicit default queue",
+			config: Config{DefaultQueue: "writing"},
+			want:   "writing",
+		},
+		{
+			name:   "empty defaults to reading",
+			config: Config{DefaultQueue: ""},
+			want:   "reading",
+		},
+		{
+			name:   "custom queue name",
+			config: Config{DefaultQueue: "research"},
+			want:   "research",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.config.GetDefaultQueue(); got != tt.want {
+				t.Errorf("GetDefaultQueue() = %q, want %q", got, tt.want)
+			}
+		})
+	}
 }
 
 func TestLoadInvalidJSON(t *testing.T) {

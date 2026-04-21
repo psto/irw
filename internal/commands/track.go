@@ -4,19 +4,28 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
+	"github.com/psto/irw/internal/config"
 	"github.com/psto/irw/internal/db"
 	"github.com/psto/irw/internal/models"
 	"github.com/psto/irw/internal/tui"
 )
 
-func Track(database *sql.DB, input string, queueType string) error {
+func Track(cfg config.ConfigProvider, database *sql.DB, input string, queueType string) error {
 	if queueType == "" {
-		queueType = "reading"
+		queueType = cfg.GetDefaultQueue()
 	}
-	if queueType != "reading" && queueType != "writing" {
-		return fmt.Errorf("invalid queue: %q (must be 'reading' or 'writing')", queueType)
+
+	validQueues := cfg.GetZkTags()
+	if _, ok := validQueues[queueType]; !ok {
+		queues := make([]string, 0, len(validQueues))
+		for q := range validQueues {
+			queues = append(queues, q)
+		}
+		sort.Strings(queues)
+		return fmt.Errorf("invalid queue: %q (configured queues: %s)", queueType, strings.Join(queues, ", "))
 	}
 
 	if isURI(input) {

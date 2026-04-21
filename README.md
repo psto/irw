@@ -27,20 +27,39 @@ Config file lives at `~/.config/irw/config.json` and is created automatically wi
 |--------|---------|-------------|
 | `db_path` | `~/.local/share/irw-tool/irw.db` | SQLite database path |
 | `launcher` | `xdg-open` (Linux) | Command to open files |
-| `zk_tags.reading` | `["status/reading"]` | zk tags imported as reading items |
-| `zk_tags.writing` | `["status/writing"]` | zk tags imported as writing items |
+| `default_queue` | `reading` | Default queue for track/review/stats commands |
+| `zk_tags` | reading/writing | Map of queue names to zk tags for import |
+
+### Custom Queues
+
+Add custom queues by adding keys to `zk_tags`:
+
+```json
+{
+  "default_queue": "reading",
+  "zk_tags": {
+    "reading": ["status/reading"],
+    "writing": ["status/writing"],
+    "research": ["status/research"]
+  }
+}
+```
+
+- Queue names are defined by `zk_tags` keys
+- `default_queue` determines which queue is used when not specified
+- Invalid queue names return an error listing all configured queues
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `irw track <file>` | Add file to queue. Use `--queue` (`-q`) to specify reading (default) or writing |
+| `irw track <file>` | Add file to queue. Use `--queue` (`-q`) to specify queue (must be in `zk_tags`) |
 | `irw untrack <file>` | Remove from queue |
 | `irw complete [file]` | Mark as finished |
 | `irw priority [file] [p]` | Set priority 0–100 |
-| `irw review [type] [ext]` | Interactive review. `type`: reading/writing. `ext`: file extension filter. `--compact` for minimal UI. |
+| `irw review [type] [ext]` | Interactive review. `type`: queue name from `zk_tags`. `ext`: file extension filter. `--compact` for minimal UI. |
 | `irw schedule` | List due items. `--raw` for CSV, `-0` for null-delimited (pipe to xargs). |
-| `irw stats [type]` | Queue stats and session history |
+| `irw stats [type]` | Queue stats. `type`: queue name from `zk_tags` (defaults to `default_queue`) |
 | `irw import` | Sync from zk notebook (tags `status/reading`, `status/writing`) and Sioyek PDF highlights |
 | `irw purge` | Remove all finished items from database |
 

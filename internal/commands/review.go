@@ -13,7 +13,7 @@ import (
 
 func Review(cfg config.ConfigProvider, database *sql.DB, trackType string, ext string, compactMode bool) error {
 	if trackType == "" {
-		trackType = "reading"
+		trackType = cfg.GetDefaultQueue()
 	}
 
 	startTime := time.Now()
@@ -92,6 +92,6 @@ done:
 	duration := int(time.Since(startTime).Seconds())
 	db.LogSession(database, duration, count, finished)
 
-	ShowStats(database, trackType)
+	ShowStats(cfg, database, trackType)
 	return nil
 }

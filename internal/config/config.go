@@ -9,21 +9,24 @@ import (
 type ConfigProvider interface {
 	GetDBPath() string
 	GetLauncher() string
+	GetDefaultQueue() string
 	GetZkTags() map[string][]string
 }
 
 type Config struct {
-	DBPath string `json:"db_path"`
-	Launcher string `json:"launcher"`
-	ZkTags map[string][]string `json:"zk_tags"`
-	DBPathExplicit bool `json:"-"`
+	DBPath        string            `json:"db_path"`
+	Launcher      string            `json:"launcher"`
+	DefaultQueue  string            `json:"default_queue"`
+	ZkTags        map[string][]string `json:"zk_tags"`
+	DBPathExplicit bool             `json:"-"`
 }
 
 func (c *Config) UnmarshalJSON(data []byte) error {
 	type aliasStruct struct {
-		DBPath string `json:"db_path"`
-		Launcher string `json:"launcher"`
-		ZkTags map[string][]string `json:"zk_tags"`
+		DBPath       string            `json:"db_path"`
+		Launcher     string            `json:"launcher"`
+		DefaultQueue string            `json:"default_queue"`
+		ZkTags       map[string][]string `json:"zk_tags"`
 	}
 	var tmp aliasStruct
 	if err := json.Unmarshal(data, &tmp); err != nil {
@@ -31,6 +34,7 @@ func (c *Config) UnmarshalJSON(data []byte) error {
 	}
 	c.DBPath = tmp.DBPath
 	c.Launcher = tmp.Launcher
+	c.DefaultQueue = tmp.DefaultQueue
 	c.ZkTags = tmp.ZkTags
 	c.DBPathExplicit = tmp.DBPath != ""
 	return nil
@@ -48,6 +52,13 @@ func (c *Config) GetLauncher() string {
 		return c.Launcher
 	}
 	return DefaultLauncher()
+}
+
+func (c *Config) GetDefaultQueue() string {
+	if c.DefaultQueue != "" {
+		return c.DefaultQueue
+	}
+	return "reading"
 }
 
 func (c *Config) GetZkTags() map[string][]string {
@@ -93,13 +104,14 @@ func Load() (*Config, error) {
 
 func writeDefaultConfig(path string) error {
 	cfg := &Config{
-		DBPath: DefaultDBPath(),
-		Launcher: "",
+		DBPath:       DefaultDBPath(),
+		Launcher:     "",
+		DefaultQueue: "reading",
 		ZkTags: map[string][]string{
 			"reading": {"status/reading"},
-"writing": {"status/writing"},
-	},
-}
+			"writing": {"status/writing"},
+		},
+	}
 data, err := json.MarshalIndent(cfg, "", " ")
 if err != nil {
 	return err
@@ -115,6 +127,10 @@ func (n NullConfig) GetDBPath() string {
 
 func (n NullConfig) GetLauncher() string {
 	return ""
+}
+
+func (n NullConfig) GetDefaultQueue() string {
+	return "reading"
 }
 
 func (n NullConfig) GetZkTags() map[string][]string {

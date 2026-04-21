@@ -15,7 +15,7 @@ import (
 
 func Import(database *sql.DB, cfg config.ConfigProvider) {
 	importFromZk(database, cfg, tui.RealZkRunner{})
-	importFromSioyek(database)
+	importFromSioyek(database, cfg)
 }
 
 func importFromZk(database *sql.DB, cfg config.ConfigProvider, zkRunner tui.ZkRunner) {
@@ -69,7 +69,7 @@ func importFromZk(database *sql.DB, cfg config.ConfigProvider, zkRunner tui.ZkRu
 	}
 }
 
-func importFromSioyek(database *sql.DB) {
+func importFromSioyek(database *sql.DB, cfg config.ConfigProvider) {
 	fmt.Println("Syncing highlighted files from Sioyek to tracker...")
 
 	home, _ := tui.GetHomeDir()
@@ -107,8 +107,8 @@ func importFromSioyek(database *sql.DB) {
 
 		if tui.FileExists(realPath) {
 			exists, _ := db.PathExists(database, realPath)
-			if !exists {
-				db.InsertTrack(database, realPath, "reading", nil)
+		if !exists {
+			db.InsertTrack(database, realPath, cfg.GetDefaultQueue(), nil)
 				fmt.Printf("Added to tracker from Sioyek highlights: %s\n", tui.BaseName(realPath))
 			}
 		}

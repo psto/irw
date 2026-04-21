@@ -11,9 +11,9 @@ import (
 	"github.com/psto/irw/internal/tui"
 )
 
-func ShowStats(database *sql.DB, trackType string) {
+func ShowStats(cfg config.ConfigProvider, database *sql.DB, trackType string) {
 	if trackType == "" {
-		trackType = "reading"
+		trackType = cfg.GetDefaultQueue()
 	}
 
 	active, finished, due, completion, err := db.GetTrackStats(database, trackType)

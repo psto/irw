@@ -38,7 +38,8 @@ func (m mockZkRunner) Run(args ...string) ([]byte, error) {
 }
 
 type mockConfigProvider struct {
-	zkTags map[string][]string
+	defaultQueue string
+	zkTags       map[string][]string
 }
 
 func (m mockConfigProvider) GetDBPath() string {
@@ -47,6 +48,10 @@ func (m mockConfigProvider) GetDBPath() string {
 
 func (m mockConfigProvider) GetLauncher() string {
 	return ""
+}
+
+func (m mockConfigProvider) GetDefaultQueue() string {
+	return m.defaultQueue
 }
 
 func (m mockConfigProvider) GetZkTags() map[string][]string {
