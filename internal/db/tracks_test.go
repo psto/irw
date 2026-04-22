@@ -37,6 +37,24 @@ func TestDeleteTrack(t *testing.T) {
 	}
 }
 
+func TestDeleteTrackNonExistent(t *testing.T) {
+	tmpDir := t.TempDir()
+	db, err := Connect(config.NullConfig{}, tmpDir+"/test.db")
+	if err != nil {
+		t.Fatalf("Connect failed: %v", err)
+	}
+	defer db.Close()
+	CreateTables(db)
+
+	exists, err := PathExists(db, "/no/such/file.pdf")
+	if err != nil {
+		t.Fatalf("PathExists failed: %v", err)
+	}
+	if exists {
+		t.Error("expected exists=false for non-existent path")
+	}
+}
+
 func TestMarkFinished(t *testing.T) {
 	tmpDir := t.TempDir()
 	db, err := Connect(config.NullConfig{}, tmpDir+"/test.db")

@@ -88,6 +88,14 @@ func Untrack(database *sql.DB, target string) error {
 		return fmt.Errorf("file argument required")
 	}
 
+	exists, err := db.PathExists(database, target)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("no such file: %s", target)
+	}
+
 	if err := db.DeleteTrack(database, target); err != nil {
 		return err
 	}
