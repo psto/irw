@@ -58,6 +58,7 @@ Add custom queues by adding keys to `zk_tags`:
 | `irw complete [file]` | Mark as finished |
 | `irw priority [file] [p]` | Set priority 0–100 |
 | `irw review [type] [ext]` | Interactive review. `type`: queue name from `zk_tags`. `ext`: file extension filter. `--compact` for minimal UI. |
+| `irw read [file]` | Read a tracked file. With file path: open directly (must be tracked). Without: fuzzy-searchable list of active files. |
 | `irw schedule` | List due items. `--raw` for CSV, `-0` for null-delimited (pipe to xargs). |
 | `irw stats [type]` | Queue stats. `type`: queue name from `zk_tags` (defaults to `default_queue`) |
 | `irw import` | Sync from zk notebook (tags `status/reading`, `status/writing`) and Sioyek PDF highlights |

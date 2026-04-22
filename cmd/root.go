@@ -133,10 +133,15 @@ var reviewCmd = &cobra.Command{
 }
 
 var readCmd = &cobra.Command{
-	Use:   "read",
-	Short: "Pick a specific file to read",
+	Use:   "read [file]",
+	Short: "Read a tracked file",
+	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return commands.ReadFile(cfg, database)
+		filePath := ""
+		if len(args) > 0 {
+			filePath = args[0]
+		}
+		return commands.ReadFile(cfg, database, filePath)
 	},
 }
 
